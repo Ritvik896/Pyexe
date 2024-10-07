@@ -1,0 +1,352 @@
+
+I have an application that takes text file as an input and then extracts some fields then creates an excel and csv file as output , now what i needed was to create an exe file and and there I can upload a file supposedly in txt format and get my desired output, i have set of 2 codes one code generates the exe file and the other that extracts fields out of the txt file and creates a csv and excel file, now I want to integrate the Submit button in the exe file with the other code and generate the csv and excel file for the path that I am providing, below are the two codes:
+
+exe file code: import tkinter as tk
+
+from tkinter import filedialog, ttk
+
+def browse_files():
+
+   # Determine file types based on user selection
+
+   file_types = file_type_var.get()
+
+   
+
+   if file_types == "All Files":
+
+       file_types = [("All Files", ".")]
+
+   elif file_types == "PDF Files":
+
+       file_types = [("PDF Files", "*.pdf")]
+
+   elif file_types == "Word Files":
+
+       file_types = [("Word Files", "*.docx")]
+
+   elif file_types == "Excel Files":
+
+       file_types = [("Excel Files", "*.xlsx")]
+
+   elif file_types == "Executable Files":
+
+       file_types = [("Executable Files", "*.exe")]
+
+   elif file_types == "JSON Files":
+
+       file_types = [("JSON Files", "*.json")]
+
+   elif file_types == "Rego Files":
+
+       file_types = [("Rego Files", "*.rego")]
+
+   else:
+
+       file_types = [("All Files", ".")]
+
+   # Open the file dialog to browse for files of the selected type
+
+   filename = filedialog.askopenfilename(title="Select a File", filetypes=file_types)
+
+   
+
+   # Display the selected file in the label
+
+   if filename:
+
+       file_label.config(text=f"Selected: {filename}", fg="black")
+
+   else:
+
+       file_label.config(text="No file selected", fg="red")
+
+def open_application():
+
+   # Create the main window
+
+   root = tk.Tk()
+
+   root.title("OPA Application")
+
+   # Set the window size
+
+   root.geometry("400x300")
+
+   # Welcome message
+
+   welcome_label = tk.Label(root, text="Welcome to OPA Application", font=("Arial", 14))
+
+   welcome_label.pack(pady=10)
+
+   # Dropdown menu to select file type
+
+   global file_type_var
+
+   file_type_var = tk.StringVar(value="All Files")
+
+   file_types = ["All Files", "PDF Files", "Word Files", "Excel Files", "Executable Files", "JSON Files", "Rego Files"]
+
+   file_type_label = tk.Label(root, text="Select file type to view:", font=("Arial", 10))
+
+   file_type_label.pack(pady=5)
+
+   file_type_dropdown = ttk.Combobox(root, textvariable=file_type_var, values=file_types, state="readonly")
+
+   file_type_dropdown.pack(pady=5)
+
+   # Browse button styled as a standard button
+
+   browse_button = tk.Button(root, text="Browse", command=browse_files, font=("Arial", 10), relief="raised", bd=2)
+
+   browse_button.pack(pady=5)
+
+   # Label to display the selected file
+
+   global file_label
+
+   file_label = tk.Label(root, text="No file selected", font=("Arial", 10))
+
+   file_label.pack(pady=10)
+
+   # Submit button styled as a standard button
+
+   submit_button = tk.Button(root, text="Submit", font=("Arial", 10), relief="raised", bd=2)
+
+   submit_button.pack(pady=20)
+
+   # Run the application
+
+   root.mainloop()
+
+if name == "main":
+
+   open_application()
+
+Below is the conversion file: import json
+
+import csv
+
+import os
+
+import logging
+
+import pandas as pd
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+class CheckExtractor:
+
+   def init(self, input_file, output_csv_file, output_excel_file):
+
+       self.input_file = input_file
+
+       self.output_csv_file = output_csv_file
+
+       self.output_excel_file = output_excel_file
+
+       self.extracted_data = []
+
+   # read the input file content
+
+   def read_file(self):
+
+       if not os.path.isfile(self.input_file):
+
+           logging.error(f"File not found: {self.input_file}")
+
+           raise FileNotFoundError(f"File not Found: {self.input_file}")
+
+       with open(self.input_file, 'r') as f:
+
+           try:
+
+               content = f.read()
+
+               return content
+
+           except Exception as e:
+
+               logging.error(f"Error reading the file: {e}")
+
+               raise
+
+   # parse the content to json
+
+   def parse_json(self, content):
+
+       try:
+
+           return json.loads(content)
+
+       except json.JSONDecodeError as e:
+
+           logging.error(f"Error parsing JSON: {e}")
+
+           raise
+
+   # extracting the checks
+
+   def extract_checks(self, data):
+
+       for check in data:
+
+           check_type = check.get('check_type', 'Unknown')
+
+           failed_checks = check['results'].get('failed_checks', [])
+
+           if failed_checks:
+
+               self._extract_failed_checks(check_type, failed_checks)
+
+           else:
+
+               self._add_passed_check(check_type)
+
+   # extracting failed checks
+
+   def _extract_failed_checks(self, check_type, failed_checks):
+
+       for failed_check in failed_checks:
+
+           if failed_check['check_result']['result'] == 'FAILED':
+
+               details = {
+
+                   'check_type': check_type,
+
+                   'check_id': failed_check.get('check_id', 'N/A'),
+
+                   'check_class': failed_check.get('check_class', 'N/A'),
+
+                   'guideline': failed_check.get('guideline', 'N/A'),
+
+                   'resource': failed_check.get('resource', 'N/A'),
+
+                   'file_path': failed_check.get('file_path', 'N/A'),
+
+                   'file_abs_path': failed_check.get('file_abs_path', 'N/A'),
+
+                   'repo_file_path': failed_check.get('repo_file_path', 'N/A'),
+
+                   'file_line_range': failed_check.get('file_line_range', 'N/A'),
+
+                   'status': 'FAILED'
+
+               }
+
+               self.extracted_data.append(details)
+
+   # passed checks
+
+   def _add_passed_check(self, check_type):
+
+       self.extracted_data.append({
+
+           'check_type': check_type,
+
+           'check_id': 'N/A',
+
+           'check_class': 'N/A',
+
+           'guideline': 'N/A',
+
+           'resource': 'N/A',
+
+           'file_path': 'N/A',
+
+           'file_abs_path': 'N/A',
+
+           'repo_file_path': 'N/A',
+
+           'file_line_range': 'N/A',
+
+           'status': 'PASSED - No failed checks'
+
+       })
+
+   # writing the extracted data to csv file
+
+   def write_to_csv(self):
+
+       try:
+
+           df = pd.DataFrame(self.extracted_data)
+
+           df['file_line_range'] = df['file_line_range'].apply(lambda x: str(x) if isinstance(x, list) else x)
+
+           df.to_csv(self.output_csv_file, index=False)
+
+           logging.info(f"Data successfully written to {self.output_csv_file}.")
+
+       except Exception as e:
+
+           logging.error(f"Error writing to CSV: {e}")
+
+           raise
+
+   #writing the extracted data to an Excel file
+
+   def write_to_excel(self):
+
+       try:
+
+           df = pd.DataFrame(self.extracted_data)
+
+           df['file_line_range'] = df['file_line_range'].apply(lambda x:str(x) if isinstance(x, list) else x)
+
+           df.to_excel(self.output_excel_file, index=False, sheet_name="Checks Summary")
+
+           logging.info(f"Data successfully written to {self.output_excel_file}.")
+
+       except Exception as e:
+
+           logging.error(f"Error writing to Excel: {e}")
+
+           raise
+
+   # read, parse, write data
+
+   def run(self):
+
+       try:
+
+           logging.info(f"Reading file: {self.input_file}")
+
+           content = self.read_file()
+
+           logging.info("Parsing JSON content..")
+
+           data = self.parse_json(content)
+
+           logging.info("Extracting checks..")
+
+           self.extract_checks(data)
+
+           logging.info("Writing extracted data to CSV..")
+
+           self.write_to_csv()
+
+           logging.info("Writing extracted data to Excel..")
+
+           self.write_to_excel()
+
+           logging.info(f"Process completed successfully. Extracted {len(self.extracted_data)} checks.")
+
+       except Exception as e:
+
+           logging.error(f"An error occurred: {e}")
+
+if name == 'main':
+
+   input_file = r'C:\Users\praghava\Desktop\BOA\script\chekov-viol.txt'
+
+   output_csv_file = r'C:\Users\praghava\Desktop\BOA\script\checkov-violations-summary.csv'
+
+   output_excel_file = r'C:\Users\praghava\Desktop\BOA\script\checkov-violations-summary.xlsx'
+
+   extractor = CheckExtractor(input_file, output_csv_file, output_excel_file)
+
+   extractor.run()
+
+Please tell me how can i integrate them
