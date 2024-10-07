@@ -1,0 +1,204 @@
+[
+    {
+        "check_type": "terraform",
+        "results": {
+            "failed_checks": [
+                {
+                "check_id": "CKV_AWS_152",
+                "bc_check_id": "BC_AWS_NETWORKING_55",
+                "check_name": "Ensure that Load Balancer (Network/Gateway) has cross-zone load balancing enabled",
+                "check_result": {
+                    "result": "FAILED",
+                    "evaluated_keys": [
+                        "enable_cross_zone_load_balancing"
+                    ]
+                },
+                "code_block": [
+                    [1, 
+                    "resource \"aws_lb\" \"nlb\" {\n"
+                ],
+                [
+                    2,
+                    "   name        =\"${var.service}-${var.environment2}-nlb\"\n"
+                ],
+                [
+                    3,
+                    "   internal            = true\n"
+                ]],
+                "file_path": "/default/nlb.tf",
+                "file_abs_path":  "/root/co-infra-merchant-onboarding/default/nlb.tf",
+                "repo_file_path": "/default/nlb.tf",
+                "file_line_range": [
+                    1,
+                    8
+                ],
+                "resource": "aws_lb.nlb",
+                "evaluations": null,
+                "check_class": "checkov.terraform.checks.resource.aws.LBCrossZone",
+                "connected_node": null,
+                "guideline":"https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policy",
+                "details": [],
+                "definition_context_file_path": "/root/co-infra-merchant-onboarding/default/nlb.tf"
+            },
+            {
+                "check_id": "CKV_AWS_153",
+                "bc_check_id": "BC_AWS_NETWORKING_55",
+                "check_name": "Ensure that Load Balancer (Network/Gateway) has cross-zone load balancing enabled",
+                "check_result": {
+                    "result": "FAILED",
+                    "evaluated_keys": [
+                        "enable_cross_zone_load_balancing"
+                    ]
+                },
+                "code_block": [
+                    [1, 
+                    "resource \"aws_lb\" \"nlb\" {\n"
+                ],
+                [
+                    2,
+                    "   name        =\"${var.service}-${var.environment2}-nlb\"\n"
+                ],
+                [
+                    3,
+                    "   internal            = true\n"
+                ]],
+                "file_path": "/default/nlb.tf",
+                "file_abs_path":  "/root/co-infra-merchant-onboarding/default/nlb.tf",
+                "repo_file_path": "/default/nlb.tf",
+                "file_line_range": [
+                    1,
+                    8
+                ],
+                "resource": "aws_lb.nlb",
+                "evaluations": null,
+                "check_class": "checkov.terraform.checks.resource.aws.LBCrossZone",
+                "connected_node": null,
+                "guideline":"https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policy",
+                "details": [],
+                "definition_context_file_path": "/root/co-infra-merchant-onboarding/default/nlb.tf"
+            },
+            {
+                "check_id": "CKV_AWS_154",
+                "bc_check_id": "BC_AWS_NETWORKING_55",
+                "check_name": "Ensure that Load Balancer (Network/Gateway) has cross-zone load balancing enabled",
+                "check_result": {
+                    "result": "FAILED",
+                    "evaluated_keys": [
+                        "enable_cross_zone_load_balancing"
+                    ]
+                },
+                "code_block": [
+                    [1, 
+                    "resource \"aws_lb\" \"nlb\" {\n"
+                ],
+                [
+                    2,
+                    "   name        =\"${var.service}-${var.environment2}-nlb\"\n"
+                ],
+                [
+                    3,
+                    "   internal            = true\n"
+                ]],
+                "file_path": "/default/nlb.tf",
+                "file_abs_path":  "/root/co-infra-merchant-onboarding/default/nlb.tf",
+                "repo_file_path": "/default/nlb.tf",
+                "file_line_range": [
+                    1,
+                    8
+                ],
+                "resource": "aws_lb.nlb",
+                "evaluations": null,
+                "check_class": "checkov.terraform.checks.resource.aws.LBCrossZone",
+                "connected_node": null,
+                "guideline":"https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policy",
+                "details": [],
+                "definition_context_file_path": "/root/co-infra-merchant-onboarding/default/nlb.tf"
+            }
+
+
+            ]
+        }
+    },
+
+    {
+        "check_type": "terraform_plan",
+        "results": {
+            "failed_checks": [
+                {
+                    "check_id": "CKV_AWS_355",
+                    "bc_check_id": "BC_AWS_IAM_88",
+                    "check_name": "Ensure no IAM policies documents allow \"*\" as a statement's resource for restrictable actions.",
+                    "check_result": {
+                        "result": "FAILED",
+                        "evaluated_keys": [
+                            "policy/Statement/[0]/Action"
+                        ]
+                
+                    },
+                    "code_block": [],
+                    "file_path": "/terraform-production.tfplan.json",
+                    "file_abs_path": "/root/co-infra-merchant-onboarding/terraform-production.tfplan.json",
+                    "repo_file_path": "/terraform-production.tfplan.json",
+                    "file_line_range": [
+                        0,
+                        0
+                    ],
+                    "resource": "aws_iam_policy.log_create",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.aws.IAMStarResourcePolicyDocument",
+                    "fixed_definition": null,
+                    "resource_address": "aws_iam_policy.log_create",
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policis/bc-aws-355",
+                    "details": [],
+                    "definition_context_file_path": null
+            
+                },
+                {
+                    "check_id": "CKV_AWS_356",
+                    "bc_check_id": "BC_AWS_IAM_88",
+                    "check_name": "Ensure no IAM policies documents allow \"*\" as a statement's resource for restrictable actions.",
+                    "check_result": {
+                        "result": "FAILED",
+                        "evaluated_keys": [
+                            "policy/Statement/[0]/Action"
+                        ]
+                
+                    },
+                    "code_block": [],
+                    "file_path": "/terraform-production.tfplan.json",
+                    "file_abs_path": "/root/co-infra-merchant-onboarding/terraform-production.tfplan.json",
+                    "repo_file_path": "/terraform-production.tfplan.json",
+                    "file_line_range": [
+                        0,
+                        0
+                    ],
+                    "resource": "aws_iam_policy.log_create",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.aws.IAMStarResourcePolicyDocument",
+                    "fixed_definition": null,
+                    "resource_address": "aws_iam_policy.log_create",
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policis/bc-aws-355",
+                    "details": [],
+                    "definition_context_file_path": null
+            
+                }
+
+
+            ]
+        }
+    },
+    {
+        "check_type": "circleci_pipelines",
+        "results": {
+            "failed_checks": []
+        },
+        "summary": {
+            "passed": 11,
+            "failed": 0,
+            "skipped": 0,
+            "parsing_errors": 0,
+            "resource_count": 0,
+            "chekov_version": "3.2.255"
+        }
+    }
+]
