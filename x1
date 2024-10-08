@@ -1,17 +1,22 @@
 import tkinter as tk
-from tkinter import filedialog, ttk
+from tkinter import filedialog, messagebox, ttk
 import os
-import logging
-import pandas as pd
 import json
+import pandas as pd
+import logging
 
+# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class CheckExtractor:
-    def __init__(self, input_file, output_csv_file, output_excel_file):
+    def __init__(self, input_file):
         self.input_file = input_file
-        self.output_csv_file = output_csv_file
-        self.output_excel_file = output_excel_file
+        
+        # Get the user's Downloads folder
+        self.output_dir = os.path.join(os.path.expanduser("~"), "Downloads")
+        
+        self.output_csv_file = os.path.join(self.output_dir, 'checkov-violations-summary.csv')
+        self.output_excel_file = os.path.join(self.output_dir, 'checkov-violations-summary.xlsx')
         self.extracted_data = []
 
     def read_file(self):
@@ -20,12 +25,8 @@ class CheckExtractor:
             raise FileNotFoundError(f"File not Found: {self.input_file}")
 
         with open(self.input_file, 'r') as f:
-            try:
-                content = f.read()
-                return content
-            except Exception as e:
-                logging.error(f"Error reading the file: {e}")
-                raise
+            content = f.read()
+            return content
 
     def parse_json(self, content):
         try:
@@ -38,7 +39,6 @@ class CheckExtractor:
         for check in data:
             check_type = check.get('check_type', 'Unknown')
             failed_checks = check['results'].get('failed_checks', [])
-
             if failed_checks:
                 self._extract_failed_checks(check_type, failed_checks)
             else:
@@ -76,135 +76,120 @@ class CheckExtractor:
         })
 
     def write_to_csv(self):
-        try:
-            df = pd.DataFrame(self.extracted_data)
-            df['file_line_range'] = df['file_line_range'].apply(lambda x: str(x) if isinstance(x, list) else x)
-            df.to_csv(self.output_csv_file, index=False)
-            logging.info(f"Data successfully written to {self.output_csv_file}.")
-        except Exception as e:
-            logging.error(f"Error writing to CSV: {e}")
-            raise
+        df = pd.DataFrame(self.extracted_data)
+        df['file_line_range'] = df['file_line_range'].apply(lambda x: str(x) if isinstance(x, list) else x)
+        df.to_csv(self.output_csv_file, index=False)
+        logging.info(f"Data successfully written to {self.output_csv_file}.")
 
     def write_to_excel(self):
-        try:
-            df = pd.DataFrame(self.extracted_data)
-            df['file_line_range'] = df['file_line_range'].apply(lambda x: str(x) if isinstance(x, list) else x)
-            df.to_excel(self.output_excel_file, index=False, sheet_name="Checks Summary")
-            logging.info(f"Data successfully written to {self.output_excel_file}.")
-        except Exception as e:
-            logging.error(f"Error writing to Excel: {e}")
-            raise
+        df = pd.DataFrame(self.extracted_data)
+        df['file_line_range'] = df['file_line_range'].apply(lambda x: str(x) if isinstance(x, list) else x)
+        df.to_excel(self.output_excel_file, index=False, sheet_name="Checks Summary")
+        logging.info(f"Data successfully written to {self.output_excel_file}.")
 
     def run(self):
         try:
             logging.info(f"Reading file: {self.input_file}")
             content = self.read_file()
-
             logging.info("Parsing JSON content..")
             data = self.parse_json(content)
-
             logging.info("Extracting checks..")
             self.extract_checks(data)
-
             logging.info("Writing extracted data to CSV..")
             self.write_to_csv()
-
             logging.info("Writing extracted data to Excel..")
             self.write_to_excel()
-
             logging.info(f"Process completed successfully. Extracted {len(self.extracted_data)} checks.")
+            return True
         except Exception as e:
             logging.error(f"An error occurred: {e}")
+            return False
 
-def browse_files():
-    file_types = file_type_var.get()
 
-    if file_types == "All Files":
-        file_types = [("All Files", "*.*")]
-    elif file_types == "Text Files":
-        file_types = [("Text Files", "*.txt")]
-    elif file_types == "JSON Files":
-        file_types = [("JSON Files", "*.json")]
-    elif file_types == "Rego Files":
-        file_types = [("Rego Files", "*.rego")]
-    else:
-        file_types = [("All Files", "*.*")]
+class LogProcessorApp:
+    def __init__(self, master):
+        self.master = master
+        master.title("Log Processor")
 
-    filename = filedialog.askopenfilename(title="Select a File", filetypes=file_types)
+        self.file_path = ""
+        self.check_extractor = None
 
-    if filename:
-        file_path_var.set(filename)
-    else:
-        file_path_var.set("No file selected")
+        self.file_type_label = tk.Label(master, text="Select File Extension:")
+        self.file_type_label.pack()
 
-def execute_checkov():
-    input_file = file_path_var.get()
-    output_csv_file = 'checkov-violations-summary.csv'
-    output_excel_file = 'checkov-violations-summary.xlsx'
-    extractor = CheckExtractor(input_file, output_csv_file, output_excel_file)
-    extractor.run()
+        self.file_type_var = tk.StringVar(value="All Files")
+        self.file_type_dropdown = ttk.Combobox(master, textvariable=self.file_type_var,
+                                                values=["All Files", "Text Files",
+                                                        "JSON Files", "Rego Files"],
+                                                state='readonly')
+        self.file_type_dropdown.pack()
 
-def execute_opa():
-    input_file = file_path_var.get()
-    output_csv_file = 'opa-violations-summary.csv'
-    output_excel_file = 'opa-violations-summary.xlsx'
-    extractor = CheckExtractor(input_file, output_csv_file, output_excel_file)
-    extractor.run()
+        self.browse_button = tk.Button(master, text="Upload File", command=self.browse_files)
+        self.browse_button.pack()
 
-def submit_action():
-    scanner_field = scanner_field_var.get()
-    if scanner_field == "CheckOV log":
-        execute_checkov()
-    elif scanner_field == "OPA log":
-        execute_opa()
+        self.file_label = tk.Label(master, text="")
+        self.file_label.pack()
 
-def download_results():
-    output_csv_file = filedialog.asksaveasfilename(defaultextension=".csv", initialfile="violations-summary.csv")
-    output_excel_file = filedialog.asksaveasfilename(defaultextension=".xlsx", initialfile="violations-summary.xlsx")
+        self.scanner_type_label = tk.Label(master, text="Select Scanner Type:")
+        self.scanner_type_label.pack()
 
-    if output_csv_file:
-        os.rename('checkov-violations-summary.csv', output_csv_file)
-    if output_excel_file:
-        os.rename('checkov-violations-summary.xlsx', output_excel_file)
+        self.scanner_type_var = tk.StringVar(value="CheckOV log")
+        self.scanner_type_dropdown = ttk.Combobox(master, textvariable=self.scanner_type_var,
+                                                   values=["CheckOV log", "OPA log"],
+                                                   state='readonly')
+        self.scanner_type_dropdown.pack()
 
-def open_application():
+        self.submit_button = tk.Button(master, text="Submit", command=self.submit)
+        self.submit_button.pack()
+
+        self.download_button = tk.Button(master, text="Download Results", command=self.download_results)
+        self.download_button.pack()
+
+    def browse_files(self):
+        file_types = {
+            "All Files": "*.*",
+            "Text Files": "*.txt",
+            "JSON Files": "*.json",
+            "Rego Files": "*.rego"
+        }
+
+        selected_file_type = self.file_type_var.get()
+        file_type = file_types.get(selected_file_type, "*.*")
+        
+        self.file_path = filedialog.askopenfilename(filetypes=[(selected_file_type, file_type)])
+        if self.file_path:
+            self.file_label.config(text=self.file_path)
+
+    def submit(self):
+        if self.file_path:
+            log_type = self.scanner_type_var.get()
+            if log_type == "CheckOV log":
+                self.check_extractor = CheckExtractor(self.file_path)
+                if self.check_extractor.run():
+                    messagebox.showinfo("Success", "CheckOV log processing completed successfully.")
+            elif log_type == "OPA log":
+                messagebox.showinfo("Info", "OPA log processing is not yet implemented.")
+        else:
+            messagebox.showwarning("Warning", "Please upload a file first.")
+
+    def download_results(self):
+        if self.check_extractor:
+            output_csv = self.check_extractor.output_csv_file
+            output_excel = self.check_extractor.output_excel_file
+
+            if os.path.exists(output_csv) and os.path.exists(output_excel):
+                # This will open the files in the default application
+                os.startfile(output_csv)
+                os.startfile(output_excel)
+
+                # Show a message indicating where the files are located
+                messagebox.showinfo("Download", f"Files downloaded to:\n{self.check_extractor.output_dir}\n\nOpen them to view.")
+            else:
+                messagebox.showwarning("Warning", "Results not found. Please process the logs first.")
+        else:
+            messagebox.showwarning("Warning", "No processing has been done yet.")
+
+if __name__ == '__main__':
     root = tk.Tk()
-    root.title("OPA Application")
-    root.geometry("500x300")
-
-    welcome_label = tk.Label(root, text="Welcome to OPA Application", font=("Arial", 14))
-    welcome_label.grid(row=0, column=0, columnspan=2, pady=10)
-
-    global file_type_var
-    file_type_var = tk.StringVar(value="All Files")
-    file_types = ["All Files", "Text Files", "JSON Files", "Rego Files"]
-    file_type_label = tk.Label(root, text="File Extension:", font=("Arial", 10))
-    file_type_label.grid(row=1, column=0, padx=10, pady=5, sticky="e")
-    file_type_dropdown = ttk.Combobox(root, textvariable=file_type_var, values=file_types, state="readonly")
-    file_type_dropdown.grid(row=1, column=1, padx=10, pady=5, sticky="w")
-
-    global file_path_var
-    file_path_var = tk.StringVar(value="No file selected")
-    upload_button = tk.Button(root, text="Upload File", command=browse_files, font=("Arial", 10), relief="raised", bd=2)
-    upload_button.grid(row=2, column=0, padx=10, pady=5, sticky="e")
-    file_path_entry = tk.Entry(root, textvariable=file_path_var, font=("Arial", 10), width=40)
-    file_path_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
-
-    global scanner_field_var
-    scanner_field_var = tk.StringVar(value="CheckOV log")
-    scanner_fields = ["CheckOV log", "OPA log"]
-    scanner_field_label = tk.Label(root, text="Scanner Field:", font=("Arial", 10))
-    scanner_field_label.grid(row=3, column=0, padx=10, pady=5, sticky="e")
-    scanner_field_dropdown = ttk.Combobox(root, textvariable=scanner_field_var, values=scanner_fields, state="readonly")
-    scanner_field_dropdown.grid(row=3, column=1, padx=10, pady=5, sticky="w")
-
-    submit_button = tk.Button(root, text="Submit", command=submit_action, font=("Arial", 10), relief="raised", bd=2)
-    submit_button.grid(row=4, column=0, padx=10, pady=5, sticky="e")
-
-    download_button = tk.Button(root, text="Download Results", command=download_results, font=("Arial", 10), relief="raised", bd=2)
-    download_button.grid(row=4, column=1, padx=10, pady=5, sticky="w")
-
+    app = LogProcessorApp(root)
     root.mainloop()
-
-if __name__ == "__main__":
-    open_application()
