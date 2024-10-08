@@ -345,6 +345,15 @@ if name == 'main':
 
    output_excel_file = r'C:\Users\praghava\Desktop\BOA\script\checkov-violations-summary.xlsx'
 
+
+Create File Extension dropdown and dropdown options would be on the right side of File extension ) and the file extension dropdown should only include All Files, Text Files,  JSON Files, Rego Files
+
+Now after that there Upload file and on its right side it should have a field that contains the path of the uploaded file. and through this button we can upload files
+
+ Now in the next line I want to create a Scanner Field dropwdown option which contains the the values CheckOV log, OPA log and the dropdown list should be on right side
+
+Now create a button called Download Results 
+
    extractor = CheckExtractor(input_file, output_csv_file, output_excel_file)
 
    extractor.run()
